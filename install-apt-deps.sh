@@ -2,22 +2,18 @@
 
 apt-get update
 apt-get install -fy \
+    build-essential \
+    bzip2 \
     debhelper \
     debian-archive-keyring \
     debootstrap \
     devscripts \
-    gnome-common \
+    git \
     libgtk-4-dev \
     libnautilus-extension-dev \
     libnautilus-extension-dev \
+    meson \
+    ninja-build \
+    pkg-config \
     python3-docutils \
     python3-gi
-
-case "${DBX_BUILD_ENV:=local}" in
-    packaging)
-        apt-get install -fy cdbs autotools-dev automake
-        ;;
-
-    *)
-        ;;
-esac

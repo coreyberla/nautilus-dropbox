@@ -2,14 +2,16 @@
 
 dnf install -y --skip-unavailable \
     atk-devel \
+    bzip2 \
     cdbs \
     createrepo \
     devscripts \
     expect \
     gawk \
-    gnome-common \
-    gnome-common \
+    gcc \
+    git \
     gtk4-devel \
+    meson \
     mock \
     nautilus-devel \
     python3-docutils \

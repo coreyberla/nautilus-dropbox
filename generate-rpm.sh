@@ -3,16 +3,16 @@
 set -e
 
 # you need to have the following packages:
-# rpmdevtools, rpm-build, gawk, nautilus-devel, automake,
-# autoconf, gnome-common, libtool, gcc
+# rpmdevtools, rpm-build, nautilus-devel, meson, gcc, git
 SRCDIR=$(pwd)
 
+# Configure in a tempdir to avoid polluting the source tree.
+BUILDDIR=$(mktemp -d)
+trap "rm -rf $BUILDDIR" EXIT
+meson setup $BUILDDIR $SRCDIR
+
 # get version
-if which gawk; then
-    CURVER=$(gawk '/^AC_INIT/{sub("AC_INIT\\(\\[nautilus-dropbox\\], ", ""); sub("\\)", ""); print $0}' configure.ac)
-else
-    CURVER=$(awk '/^AC_INIT/{sub("AC_INIT\(\[nautilus-dropbox\], ", ""); sub("\)", ""); print $0}' configure.ac)
-fi
+CURVER=$(meson introspect --projectinfo $BUILDDIR | python3 -c 'import json, sys; print(json.load(sys.stdin)["version"])')
 
 # clean old package build
 rm -rf nautilus-dropbox{-,_}*
@@ -24,18 +24,10 @@ for I in BUILD RPMS SOURCES SPECS SRPMS; do
     mkdir rpmbuild/$I
 done;
 
-if [ ! -x configure ]; then
-    ./autogen.sh
-fi
-
-if [ ! -e Makefile ]; then
-    ./configure
-fi
-
 # generate package
-make dist
+$SRCDIR/make-dist.sh $BUILDDIR
 
-cp nautilus-dropbox-$CURVER.tar.bz2 rpmbuild/SOURCES/
+cp $BUILDDIR/meson-dist/nautilus-dropbox-$CURVER.tar.bz2 rpmbuild/SOURCES/
 
 cat <<EOF > rpmbuild/SPECS/nautilus-dropbox.spec
 %define glib_version 2.42.1
@@ -67,6 +59,7 @@ BuildRequires:	glib2-devel >= %{glib_version}
 BuildRequires:	python3-docutils
 BuildRequires:	cairo-devel
 BuildRequires:	gcc
+BuildRequires:	meson >= 1.0.0
 BuildRequires:	gtk4-devel
 BuildRequires:	atk-devel
 BuildRequires:	pango-devel
@@ -84,14 +77,12 @@ Check us out at https://www.dropbox.com/
 
 %build
 export DISPLAY=$DISPLAY
-%configure
-make %{?_smp_mflags}
+%meson
+%meson_build
 
 %install
 rm -rf \$RPM_BUILD_ROOT
-make install DESTDIR=\$RPM_BUILD_ROOT
-
-rm \$RPM_BUILD_ROOT%{_libdir}/nautilus/extensions-4/libnautilus-dropbox.{,l}a
+%meson_install
 
 
 %post

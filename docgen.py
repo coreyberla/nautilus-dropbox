@@ -3,12 +3,16 @@ import os
 import sys
 import time
 
+# Usage: docgen.py VERSION [DROPBOX_SCRIPT] < dropbox.txt.in > dropbox.txt
+dropbox_script = sys.argv[2] if len(sys.argv) > 2 else "dropbox"
+srcdir = os.path.dirname(os.path.abspath(__file__))
+
 # heeeheee
 env = {"__name__": "__notmain__"}
-exec(open("dropbox").read(), env)
+exec(open(dropbox_script).read(), env)
 commands = env["commands"]
 
-f = open("AUTHORS", "r")
+f = open(os.path.join(srcdir, "AUTHORS"), "r")
 authors = "| " + f.read().replace("\n", "\n| ")
 f.close()
 

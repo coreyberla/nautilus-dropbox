@@ -28,8 +28,14 @@ if __name__ == "__main__":
     try:
         print(f"Current working directory: {os.getcwd()}", file=sys.stderr)
 
-        icon64_path = "data/icons/hicolor/64x64/apps/dropbox.png"
-        icon16_path = "data/icons/hicolor/16x16/apps/dropbox.png"
+        # Resolve icons relative to this script so out-of-tree builds work.
+        srcdir = os.path.dirname(os.path.abspath(__file__))
+        icon64_path = os.path.join(
+            srcdir, "data/icons/hicolor/64x64/apps/dropbox.png"
+        )
+        icon16_path = os.path.join(
+            srcdir, "data/icons/hicolor/16x16/apps/dropbox.png"
+        )
 
         image64_data = get_base64_image_data(icon64_path)
         image16_data = get_base64_image_data(icon16_path)
@@ -46,8 +52,17 @@ if __name__ == "__main__":
             ),  # Use repr() to properly escape the string
         }
 
-        buf = sys.stdin.read()
-        sys.stdout.write(replace_many(src2dest, buf))
+        # Usage: build_dropbox.py VERSION DESKTOP_FILE_DIR [INPUT OUTPUT]
+        # Without INPUT and OUTPUT, read from stdin and write to stdout.
+        if len(sys.argv) > 4:
+            with open(sys.argv[3]) as f:
+                buf = f.read()
+            with open(sys.argv[4], "w") as f:
+                f.write(replace_many(src2dest, buf))
+            os.chmod(sys.argv[4], 0o755)
+        else:
+            buf = sys.stdin.read()
+            sys.stdout.write(replace_many(src2dest, buf))
     except Exception as e:
         print(f"Error in build_dropbox.py: {str(e)}", file=sys.stderr)
         sys.exit(1)

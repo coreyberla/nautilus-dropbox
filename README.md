@@ -31,29 +31,29 @@ You will need to install the following dependencies:
 For Ubuntu:
 
 ```
-$ sudo apt-get install -y gnome-common libgtk-4-dev libnautilus-extension-dev python3-gi python3-docutils
+$ sudo apt-get install -y meson build-essential libgtk-4-dev libnautilus-extension-dev python3-gi python3-docutils
 ```
 
 For Fedora:
 
 ```
-$ sudo dnf install -y gnome-common nautilus-devel gtk4-devel python3-docutils
+$ sudo dnf install -y meson gcc nautilus-devel gtk4-devel python3-docutils
 ```
 
 Then run the following to build and install nautilus-dropbox:
 ```
-$ ./autogen.sh
-$ make
-$ sudo make install
+$ meson setup _build
+$ meson compile -C _build
+$ sudo meson install -C _build
 ```
 
-This creates a "binary" named "dropbox" in the repo.
+This creates a "binary" named "dropbox" in the `_build` directory.
 
 To start out the installer GUI, make sure the Dropbox desktop client
 isn't currently installed and run:
 
 ```
-$ ./dropbox start -i
+$ ./_build/dropbox start -i
 ```
 
 

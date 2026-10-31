@@ -43,9 +43,9 @@ jobs:
       - name: Install deps
         run: ./${{ matrix.config.deps-script }}
       - name: Test build
-        run: ./autogen.sh && make && make install
+        run: meson setup _build && meson compile -C _build && meson install -C _build
       - name: Run tests
-        run: python3 ./dropbox_test.py
+        run: meson test -C _build --print-errorlogs
       - name: Check that latest OS version is supported
         run: |
           . ./distro-info.sh

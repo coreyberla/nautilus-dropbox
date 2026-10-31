@@ -1,39 +1,30 @@
 #!/bin/sh
 
-# you will need dh-make, dpkg-dev, fakeroot, cdbs
+# you will need dh-make, dpkg-dev, fakeroot, debhelper, meson, git
 
 set -e
 
 # clean old package build
 rm -rf nautilus-dropbox{-,_}*
 
-# Copy to a tempdir since package generation pollutes the directory.
+# Work in a tempdir since package generation pollutes the directory.
 SRCDIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
-cp -R $SRCDIR/* $TMPDIR/
-cd $TMPDIR
 
-autoreconf -f -i
+. $SRCDIR/distro-info.sh
+
+# first generate the source tarball
+meson setup $TMPDIR/meson-build $SRCDIR
+$SRCDIR/make-dist.sh $TMPDIR/meson-build
 
 # get version
-CURVER=$(mawk '/^AC_INIT/{sub("AC_INIT\(\[nautilus-dropbox\], ", ""); sub("\)", ""); print $0}' configure.ac)
+CURVER=$(meson introspect --projectinfo $TMPDIR/meson-build | python3 -c 'import json, sys; print(json.load(sys.stdin)["version"])')
 
-. ./distro-info.sh
-
-if [ ! -x configure ]; then
-    ./autogen.sh
-fi
-
-if [ ! -e Makefile ]; then
-    ./configure
-fi
-
-# first generate package binary
-make dist
+cd $TMPDIR
 
 # untar package
-tar xjf nautilus-dropbox-$CURVER.tar.bz2
+tar xjf meson-build/meson-dist/nautilus-dropbox-$CURVER.tar.bz2
 
 # go into package dir
 cd nautilus-dropbox-$CURVER
@@ -45,11 +36,12 @@ mkdir debian
 cat > debian/rules <<EOF
 #!/usr/bin/make -f
 
-include /usr/share/cdbs/1/rules/debhelper.mk
-include /usr/share/cdbs/1/class/autotools.mk
+%:
+	dh \$@ --buildsystem=meson
 
 # Avoid postinst-has-useless-call-to-ldconfig and pkg-has-shlibs-control-file-but-no-actual-shared-libs
-DEB_DH_MAKESHLIBS_ARGS=-Xnautilus-dropbox
+override_dh_makeshlibs:
+	dh_makeshlibs -Xnautilus-dropbox
 EOF
 chmod a+x debian/rules
 
@@ -426,7 +418,7 @@ Source: dropbox
 Section: gnome
 Priority: optional
 Maintainer: Dropbox <support@dropbox.com>
-Build-Depends: cdbs, debhelper (>= 10), build-essential, libnautilus-extension-dev (>= 43.0), libgtk-4-dev (>= 4.8), libglib2.0-dev (>= 2.40), python3-docutils, python3-gi (>= 3.12)
+Build-Depends: debhelper (>= 10), build-essential, meson (>= 1.0.0), ninja-build, pkg-config, libnautilus-extension-dev (>= 43.0), libgtk-4-dev (>= 4.8), libglib2.0-dev (>= 2.40), python3-docutils, python3-gi (>= 3.12)
 Standards-Version: 3.9.4.0
 
 Package: dropbox

@@ -1,0 +1,12 @@
+option(
+  'nautilus_extension_dir',
+  type: 'string',
+  value: '',
+  description: 'Directory to install the Nautilus extension into (default: from libnautilus-extension-4.pc)',
+)
+option(
+  'debug_logging',
+  type: 'boolean',
+  value: false,
+  description: 'Enable debug logging and GLib assertions in the Nautilus extension',
+)
